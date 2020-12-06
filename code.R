@@ -108,5 +108,3 @@ knn_imputation=data.frame(knn_imputation)%>%t()%>%data.frame()#transpose
 knn_imputation$Majority.protein.IDs=rownames(knn_imputation)#make rowname columns
 data_3.6=select(data_3.5, Majority.protein.IDs, Protein.names, Gene.names)#select from data_3.5. to prpare for merge
 knn_imputation=merge(knn_imputation,data_3.6, by="Majority.protein.IDs")
-
-setwd("/Users/luqmanawoniyi/Desktop/proteomicData/data_2019/normalizerDE/filterByR")
