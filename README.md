@@ -1,7 +1,7 @@
 # Differential-proteomic-analysis
 Stepwise differentia anaysis of (Awoniyi et al., bioRxiv) data.
-I this artile we used prroximity labeling technique to identify proteins localized
-to the lipid raft domain upon activation of BCR by anti-IgM.
+In this article we used proximity labeling technique (APEX2) to identify proteins 
+localized to the lipid raft domain of b cells upon activation of BCR by anti-IgM.
 ## Steps:
 -data preprocessing and cleaning
 -missing value imputation
