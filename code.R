@@ -108,3 +108,17 @@ knn_imputation=data.frame(knn_imputation)%>%t()%>%data.frame()#transpose
 knn_imputation$Majority.protein.IDs=rownames(knn_imputation)#make rowname columns
 data_3.6=select(data_3.5, Majority.protein.IDs, Protein.names, Gene.names)#select from data_3.5. to prpare for merge
 knn_imputation=merge(knn_imputation,data_3.6, by="Majority.protein.IDs")
+
+
+###########################Differentia analysis
+library(NormalyzerDE)
+dataFp <- system.file(package="NormalyzerDE", "extdata", "knn_imputation2of3Impt.txt")
+designFp <- system.file(package="NormalyzerDE", "extdata", "design2.txt")
+outDir <- "/Users/luqmanawoniyi/Desktop/proteomicData/data_2019/normalizerDE/filterByR/filter2Of3_imput"
+normalyzer(jobName="knn_imputation2of3Impt", noLogTransform= TRUE, designPath=designFp, dataPath=dataFp,
+           outputDir=outDir)
+
+#stat
+normMatrixPath <- paste(outDir, "knn_imputation2of3Impt/Quantile-normalized.txt", sep="/")
+normalyzerDE("knn_imputation2of3Impt_norm",designFp,normMatrixPath,outputDir=outDir,comparisons=c("4-1", "5-2", "6-3"),condCol="group")
+###################################################################################/DE

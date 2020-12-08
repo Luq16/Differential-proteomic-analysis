@@ -1,3 +1,14 @@
 # Differential-proteomic-analysis
-Stepwise analysis of differentia anaysis of proteins enriched in the proximal of
-B cell receptor upon antigen activation at 5, 10 and 15min timepoint (Awoniyi et al., bioRxiv).....
+Stepwise differentia anaysis of (Awoniyi et al., bioRxiv) data.
+I this artile we used prroximity labeling technique to identify proteins localized
+to the lipid raft domain upon activation of BCR by anti-IgM.
+## Steps:
+-data preprocessing and cleaning
+-missing value imputation
+-differential analysis
+-pathway analysis
+
+## Packages used.
+-dplyr
+-MSnbase
+-NormalyzerDe
