@@ -123,8 +123,8 @@ normalyzer(jobName="knn_imputation2of3Impt", noLogTransform= TRUE, designPath=de
 normMatrixPath <- paste(outDir, "knn_imputation2of3Impt/Quantile-normalized.txt", sep="/")
 normalyzerDE("knn_imputation2of3Impt_norm",designFp,normMatrixPath,outputDir=outDir,comparisons=c("4-1", "5-2", "6-3"),condCol="group")
 ###################################################################################/DE
-||||||| 2c24e60
-=======
+
+
 # read proteinGroups.txt file
 raw_df = read.delim("proteinGroups.txt", stringsAsFactors = FALSE,
                     colClasses = "character")
@@ -241,7 +241,7 @@ knn_imputation=merge(knn_imputation,data_3.6, by="Majority.protein.IDs")
 library(NormalyzerDE)
 dataFp <- system.file(package="NormalyzerDE", "extdata", "knn_imputation2of3Impt.txt")
 designFp <- system.file(package="NormalyzerDE", "extdata", "design2.txt")
-outDir <- "/Users/luqmanawoniyi/Desktop/proteomicData/data_2019/normalizerDE/filterByR/filter2Of3_imput"
+outDir <- ""
 normalyzer(jobName="knn_imputation2of3Impt", noLogTransform= TRUE, designPath=designFp, dataPath=dataFp,
            outputDir=outDir)
 
@@ -249,3 +249,165 @@ normalyzer(jobName="knn_imputation2of3Impt", noLogTransform= TRUE, designPath=de
 normMatrixPath <- paste(outDir, "knn_imputation2of3Impt/Quantile-normalized.txt", sep="/")
 normalyzerDE("knn_imputation2of3Impt_norm",designFp,normMatrixPath,outputDir=outDir,comparisons=c("4-1", "5-2", "6-3"),condCol="group")
 ###################################################################################/DE
+
+#####################################################significants and FC Filteration
+setwd("/Users/luqmanawoniyi/Desktop/proteomicData/data_2019/normalizerDE/filterByR/filter2Of3_imput/knn_imputation2of3Impt_norm")
+data_5=read.table(file = 'knn_imputation2of3Impt_norm_stats.csv', sep = ';', header = TRUE)
+sig_all<-data_5%>%filter(X4.1_AdjPVal<=0.05|X5.2_AdjPVal<=0.05|X6.3_AdjPVal<=0.05)
+#write.csv2(sig_all, "sigall.csv")
+#sig in 5min FC not considered
+sig_5min_noFC<-data_5%>%filter(X4.1_AdjPVal<=0.05)
+#sig in 10min FC not considered
+sig_10min_noFC<-data_5%>%filter(X5.2_AdjPVal<=0.05)
+#sig in 15min FC not considered
+sig_15min_noFC<-data_5%>%filter(X6.3_AdjPVal<=0.05)
+##cal. squre root
+sig_all$FC5min<-'^'(sig_all$X4.1_log2FoldChange,2)
+sig_all$FC10min<-'^'(sig_all$X5.2_log2FoldChange,2)
+sig_all$FC15min<-'^'(sig_all$X6.3_log2FoldChange,2)
+
+#filter significant in all
+sigFC_all_1_5<-sig_all%>%filter(FC5min>2.25|FC10min>2.25|FC15min>2.25)
+sigFC_all_2<-sig_all%>%filter(FC5min>=4|FC10min>=4|FC15min>=4)
+sig_5min<-sig_all%>%filter(FC5min>=2.25&X4.1_AdjPVal<=0.05)
+sig_10min<-sig_all%>%filter(FC10min>=2.25&X5.2_AdjPVal<=0.05)
+sig_15min<-sig_all%>%filter(FC15min>=2.25&X6.3_AdjPVal<=0.05)
+write.csv(sig_10min, "sig_10min.csv")
+write.csv(sig_5min, "sig_5min.csv")
+write.csv(sig_15min, "sig_15min.csv")
+write.csv(sigFC_all_1_5, "sigall_1.5FC.csv")
+write.csv(sigFC_all_2, "sigall_2FC.csv")
+write.csv(sig_all, "sig_all.csv")
+write.csv(sig_10min_noFC, "sig_10min_noFc.csv")
+write.csv(sig_5min_noFC, "sig_5min_noFc.csv")
+write.csv(sig_15min_noFC, "sig_15min_noFc.csv")
+
+######Up and down reg
+dat<-read.csv("sig_5min_noFc.csv")
+dat_2<-read.csv("sig_10min_noFc.csv")
+dat_3<-read.csv("sig_15min_noFc.csv")
+up_5min<-dat%>%filter(X4.1_log2FoldChange>0)
+up_10min<-dat_2%>%filter(X5.2_log2FoldChange>0)
+up_15min<-dat_3%>%filter(X6.3_log2FoldChange>0)
+
+down_5min<-dat%>%filter(X4.1_log2FoldChange<0)
+down_10min<-dat_2%>%filter(X5.2_log2FoldChange<0)
+down_15min<-dat_3%>%filter(X6.3_log2FoldChange<0)
+write.csv(up_5min, "up_5min.csv")
+write.csv(up_10min, "up_10min.csv")
+write.csv(up_15min, "up_15min.csv")
+
+write.csv(down_5min, "down_5min.csv")
+write.csv(down_10min, "down_10min.csv")
+write.csv(down_15min, "down_15min.csv")
+
+#####################################################/end of Filtering and significant filter
+
+#######################volcano plot using enhanceed volcano
+#make gene names rowname
+names<- make.unique(as.character(data_5$Gene.names))
+rownames(data_5) = make.names(names, unique=TRUE)
+setwd("/Users/luqmanawoniyi/Desktop/proteomicData/data_2019/normalizerDE/filterByR/filter2Of3_imput/knn_imputation2of3Impt_norm")
+
+library(EnhancedVolcano)
+#5min
+library(svglite)
+svglite("volc5.svg")
+EnhancedVolcano(data_5,
+                lab = rownames(data_5),
+                x = 'X4.1_log2FoldChange',
+                y = 'X4.1_AdjPVal',
+                xlim=c(-6,8.5),
+                ylim = c(-0.2,7.5),
+                title = 'non-activated versus 5min Fab2 activated',
+                pCutoff = 0.05,
+                FCcutoff = 1.5,
+                titleLabSize = 20,
+                shape = 20,
+                pointSize=3,
+                colAlpha=1,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendPosition = 'bottom',
+                legendLabSize = 14,
+                legendIconSize = 4.0,
+                drawConnectors = TRUE,
+                widthConnectors = 0.5,
+                #selectLab=c("IgK.V", "Ighm", "Myo1g","Irf5", "Tacc1" ,"Usp7", "Cybb", "Hspa14", "Tor1aip1",
+                #         "Shq1", "Sssca1", "Polr2c", "Stk10", "Plcb3", "Mapk1", "Nfkbia", "Lyn","Lmtk2",
+                #        "Vti1b","Smad2","Cd79a", "Cd79b"),
+                selectLab=c("IgK.V","Ighm","Shq1", "Polr2c","Lyn","Pik3r1","Mark2"),
+                colConnectors = 'grey10',
+                legend=c('NS','Log2(fold-change)','P value',
+                         'P value & Log2(fold-change'),
+                subtitle="Differential expression",
+                axisLabSize= 22,
+                labSize=5,
+                boxedLabels=TRUE
+)
+dev.off()
+
+svglite("volc10.svg")
+EnhancedVolcano(data_5,
+                lab = rownames(data_5),
+                x = 'X5.2_log2FoldChange',
+                y = 'X5.2_AdjPVal',
+                xlim=c(-6,8.5),
+                ylim = c(-0.2,10),
+                title = 'non-activated versus 10min Fab2 activated',
+                pCutoff = 0.05,
+                FCcutoff = 1.5,
+                titleLabSize = 20,
+                shape = 20,
+                pointSize=3,
+                colAlpha=1,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendPosition = 'bottom',
+                legendLabSize = 14,
+                legendIconSize = 4.0,
+                drawConnectors = TRUE,
+                widthConnectors = 0.5,
+                selectLab=c("IgK.V","Ighm","Shq1", "Polr2c","Lyn","Pik3r1","Mark2"),
+                colConnectors = 'grey10',
+                legend=c('NS','Log2(fold-change)','P value',
+                         'P value & Log2(fold-change'),
+                subtitle="Differential expression",
+                axisLabSize= 22,
+                labSize=5,
+                boxedLabels=TRUE
+)
+dev.off()
+
+svglite("volc15.svg")
+EnhancedVolcano(data_5,
+                lab = rownames(data_5),
+                x = 'X6.3_log2FoldChange',
+                y = 'X6.3_AdjPVal',
+                xlim=c(-6,8.5),
+                ylim = c(-0.2,7.5),
+                title = 'non-activated versus 15min Fab2 activated',
+                pCutoff = 0.05,
+                FCcutoff = 1.5,
+                titleLabSize = 20,
+                shape = 20,
+                pointSize=3,
+                colAlpha=1,
+                gridlines.major = FALSE,
+                gridlines.minor = FALSE,
+                legendPosition = 'bottom',
+                legendLabSize = 14,
+                legendIconSize = 4.0,
+                drawConnectors = TRUE,
+                widthConnectors = 0.5,
+                selectLab=c("IgK.V","Ighm","Shq1", "Polr2c","Lyn","Pik3r1","Mark2"),
+                colConnectors = 'grey10',
+                legend=c('NS','Log2(fold-change)','P value',
+                         'P value & Log2(fold-change'),
+                subtitle="Differential expression",
+                axisLabSize= 22,
+                labSize=5,
+                boxedLabels=TRUE
+)
+dev.off()
+#############################################/end of volcano
